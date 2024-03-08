@@ -16,19 +16,23 @@ import java.util.concurrent.CompletableFuture;
 @Component
 public class MessageProducer {
 
-    @Autowired
     private KafkaTemplate<String, Data> kafkaTemplate;
-    @Value(value = "${kafka.topic.name}")
     private String topicName;
+
+    @Autowired
+    public MessageProducer(KafkaTemplate<String, Data> kafkaTemplate, @Value("${kafka.topic.name}") String topicName) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.topicName = topicName;
+    }
 
 
     public void sendMessage(final Data data) {
-        CompletableFuture<SendResult<String, Data>> future =  kafkaTemplate.send(topicName, data);
+        CompletableFuture<SendResult<String, Data>> future = kafkaTemplate.send(topicName, data);
 
         future.thenAccept(result -> {
             System.out.println(String.format("Sent Message = = {%s} with offset = {%s}", data, result));
         }).exceptionally(ex -> {
-            System.out.println(String.format("Unable to send message = {%s} dut to: {%s}", data, ex.getMessage()));
+            System.out.println(String.format("Unable to send message = {%s} due to: {%s}", data, ex.getMessage()));
             return null; // Возвращаем null, чтобы продолжить цепочку обработки ошибок
         });
     }
